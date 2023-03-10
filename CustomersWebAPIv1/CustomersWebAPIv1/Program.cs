@@ -11,7 +11,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     var xmlDocumentFile = $" {Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlDocumentFile);
-    c.IncludeXmlComments("D:\\c drive downloads\\SwaggerDocumentFolder\\swaggerDocument.xml");
+    c.IncludeXmlComments("swaggerDocument.xml");
 });
 
 var app = builder.Build();
