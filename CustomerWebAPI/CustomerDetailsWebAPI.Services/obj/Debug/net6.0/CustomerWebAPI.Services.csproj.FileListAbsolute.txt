@@ -1,0 +1,12 @@
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\bin\Debug\net6.0\CustomerWebAPI.Services.deps.json
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\bin\Debug\net6.0\CustomerWebAPI.Services.dll
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\bin\Debug\net6.0\CustomerWebAPI.Services.pdb
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\obj\Debug\net6.0\CustomerWebAPI.Services.csproj.AssemblyReference.cache
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\obj\Debug\net6.0\CustomerWebAPI.Services.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\obj\Debug\net6.0\CustomerWebAPI.Services.AssemblyInfoInputs.cache
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\obj\Debug\net6.0\CustomerWebAPI.Services.AssemblyInfo.cs
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\obj\Debug\net6.0\CustomerWebAPI.Services.csproj.CoreCompileInputs.cache
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\obj\Debug\net6.0\CustomerWebAPI.Services.dll
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\obj\Debug\net6.0\refint\CustomerWebAPI.Services.dll
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\obj\Debug\net6.0\CustomerWebAPI.Services.pdb
+C:\Users\user\source\repos\CustomerWebAPI\CustomerDetailsWebAPI.Services\obj\Debug\net6.0\ref\CustomerWebAPI.Services.dll
