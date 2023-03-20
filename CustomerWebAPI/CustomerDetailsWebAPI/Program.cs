@@ -16,8 +16,8 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments("swaggerDocument.xml");
 });
 // Add services to the container.
-builder.Services.AddScoped<ICustomersRepository, CustomerRepository>();
-builder.Services.AddScoped<ICustomerLocationsRepository, CustomerRepository>();
+builder.Services.AddSingleton<ICustomersRepository, CustomerRepository>();
+builder.Services.AddSingleton<ICustomerLocationsRepository, CustomerRepository>();
 
 var app = builder.Build();
 
