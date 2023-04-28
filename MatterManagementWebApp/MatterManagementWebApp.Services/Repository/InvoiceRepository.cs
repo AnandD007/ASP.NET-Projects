@@ -9,11 +9,11 @@ namespace MatterManagementWebApp.Services.Repository
 {
     public interface IInvoiceRepository
     {
-        void Add(InvoiceDto invoice);
+        int Add(InvoiceDto invoice);
         IEnumerable<InvoiceDto> GetAll();
         InvoiceDto GetById(int id);
-        void Update(InvoiceDto invoice);
-        void Delete(int id);
+        int Update(int invoiceId, InvoiceDto invoice);
+        int Delete(int id);
     }
 
     public class InvoiceRepository : IInvoiceRepository
@@ -27,20 +27,29 @@ namespace MatterManagementWebApp.Services.Repository
             _context = context;
         }
 
-        public void Add(InvoiceDto i)
+        public int Add(InvoiceDto invoice)
         {
-            var entity = new Invoice
+            Matter currentMatter = _context.Matters.FirstOrDefault(m => m.MatterId == invoice.MatterId);
+            Attorney attorneyCheck = _context.Attorneys.FirstOrDefault(a =>
+                                (a.AttorneyId == currentMatter.BillingAttorneyId) || (a.AttorneyId == currentMatter.ResponsibleAttorneyId));
+            if (attorneyCheck == null)
             {
-                Date = i.Date,
-                TotalAmount = i.TotalAmount,
-                HoursWorked = i.HoursWorked,
-                MatterId = i.MatterId
-            };
+                return (0);
+            }
 
-            _context.Invoices.Add(entity);
+            int attorneyRate = _context.Attorneys.Where(a => a.AttorneyId == invoice.AttorneyId).Select(a => a.HourlyRate).First();
+
+            Invoice newInvoice = new Invoice();
+            {
+                newInvoice.Date = invoice.Date;
+                newInvoice.HoursWorked = invoice.HoursWorked;
+                newInvoice.TotalAmount = (int)invoice.HoursWorked * attorneyRate;
+                newInvoice.MatterId = invoice.MatterId;
+                newInvoice.AttorneyId = invoice.AttorneyId;
+            }
+            _context.Invoices.Add(newInvoice);
             _context.SaveChanges();
-
-            i.InvoiceId = entity.InvoiceId;
+            return newInvoice.InvoiceId;
         }
 
         public IEnumerable<InvoiceDto> GetAll()
@@ -72,31 +81,35 @@ namespace MatterManagementWebApp.Services.Repository
                 .SingleOrDefault();
         }
 
-        public void Update(InvoiceDto invoice)
+        public int Update(int invoiceId, InvoiceDto invoice)
         {
-            var entity = _context.Invoices.SingleOrDefault(i => i.InvoiceId == invoice.InvoiceId);
+            var entity = _context.Invoices.SingleOrDefault(i => i.InvoiceId == invoiceId);
+
+            int attorneyHourlyRate = _context.Attorneys.Where(a => a.AttorneyId == invoice.AttorneyId).Select(a => a.HourlyRate).First();
 
             if (entity == null)
-                throw new InvalidOperationException("Entity not found");
+                return 0;
 
             entity.TotalAmount = invoice.TotalAmount;
             entity.Date = invoice.Date;
-            entity.HoursWorked = invoice.HoursWorked;
+            entity.HoursWorked = invoice.HoursWorked * attorneyHourlyRate;
             entity.MatterId = invoice.MatterId;
             entity.AttorneyId = invoice.AttorneyId;
 
             _context.SaveChanges();
+            return entity.InvoiceId;
         }
 
-        public void Delete(int id)
+        public int Delete(int id)
         {
             var entity = _context.Invoices.SingleOrDefault(i => i.InvoiceId == id);
 
             if (entity == null)
-                throw new InvalidOperationException("Entity not found");
+                return 0;
 
             _context.Invoices.Remove(entity);
             _context.SaveChanges();
+            return entity.InvoiceId;
         }
     }
 

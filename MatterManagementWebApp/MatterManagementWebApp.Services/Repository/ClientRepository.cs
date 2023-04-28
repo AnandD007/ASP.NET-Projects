@@ -9,11 +9,11 @@ namespace MatterManagementWebApp.Services.Repository
 {
     public interface IClientRepository
     {
-        void Add(ClientDto client);
+        int Add(ClientDto client);
         IEnumerable<ClientDto> GetAll();
         ClientDto GetById(int ClientId);
-        void Update(ClientDto client);
-        void Delete(int ClientId);
+        int Update(ClientDto client);
+        int Delete(int ClientId);
     }
 
     public class ClientRepository : IClientRepository
@@ -25,11 +25,10 @@ namespace MatterManagementWebApp.Services.Repository
             _context = context;
         }
 
-        public void Add(ClientDto client)
+        public int Add(ClientDto client)
         {
             var entity = new Client
             {
-                ClientId = client.ClientId,
                 FullName = client.FullName,
                 PhoneNo = client.PhoneNo,
                 EmailId = client.EmailId,
@@ -38,6 +37,7 @@ namespace MatterManagementWebApp.Services.Repository
             };
             _context.Clients.Add(entity);
             _context.SaveChanges();
+            return entity.ClientId;
         }
 
         public IEnumerable<ClientDto> GetAll()
@@ -71,12 +71,12 @@ namespace MatterManagementWebApp.Services.Repository
                 .SingleOrDefault();
         }
 
-        public void Update(ClientDto client)
+        public int Update(ClientDto client)
         {
             var entity = _context.Clients.SingleOrDefault(c => c.ClientId == client.ClientId);
 
             if (entity == null)
-                throw new InvalidOperationException("Entity not found");
+                return 0;
 
             entity.FullName = client.FullName;
             entity.PhoneNo = client.PhoneNo;
@@ -85,17 +85,19 @@ namespace MatterManagementWebApp.Services.Repository
             entity.Age = client.Age;
 
             _context.SaveChanges();
+            return entity.ClientId;
         }
 
-        public void Delete(int ClientId)
+        public int Delete(int ClientId)
         {
             var entity = _context.Clients.SingleOrDefault(c => c.ClientId == ClientId);
 
             if (entity == null)
-                throw new InvalidOperationException("Entity not found");
+                return 0;
 
             _context.Clients.Remove(entity);
             _context.SaveChanges();
+            return entity.ClientId;
         }
     }
 }

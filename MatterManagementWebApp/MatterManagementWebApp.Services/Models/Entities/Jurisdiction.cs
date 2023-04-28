@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using MatterManagementWebApp.Services.Models.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace MatterManagementWebApp.Services.Models.Entities
 {
@@ -13,12 +10,9 @@ namespace MatterManagementWebApp.Services.Models.Entities
     {
         [Key]
         public int JurisdictionId { get; set; }
-        [Required]
-        [MaxLength(30)]
-        public string? FullName { get; set; }
-        [Required]
+        [Required][JsonIgnore]
         [MaxLength(20)]
-        public string? PhoneNo { get; set; }
+        public string? Area { get; set; }
         [Required]
         public string? EmailId { get; set; }
         public ICollection<Attorney>? Attorneys { get; set; }

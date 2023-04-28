@@ -24,6 +24,7 @@ builder.Services.AddScoped<IJurisdictionRepository, JurisdictionRepository>();
 builder.Services.AddScoped<IAttorneyRepository, AttorneyRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
+
 builder.Services.AddCors(o => o.AddPolicy("ReactPolicy", builder =>
 {
     builder.AllowAnyHeader()

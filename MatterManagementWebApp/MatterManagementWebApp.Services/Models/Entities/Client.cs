@@ -20,7 +20,6 @@ namespace MatterManagementWebApp.Services.Models.Entities
         public string? Gender { get; set; }
         [MaxLength(10)]
         public int? Age { get; set; }
-        
         public ICollection<Matter>? Matters { get; set;}
     }
 }

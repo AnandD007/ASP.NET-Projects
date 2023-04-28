@@ -1,5 +1,6 @@
 ﻿using MatterManagementWebApp.Services.Data.DBContext;
 using MatterManagementWebApp.Services.Data.DTOs;
+using MatterManagementWebApp.Services.Data.Mappers;
 using MatterManagementWebApp.Services.Models;
 using MatterManagementWebApp.Services.Models.Entities;
 
@@ -7,20 +8,17 @@ namespace MatterManagementWebApp.Services.Repository
 {
     public interface IMatterRepository
     {
-        void Add(MatterDto matter);
-        void Update(MatterDto matter);
-        void Delete(int id);
+        int Add(MatterDto matter);
+        int Update(MatterDto matter);
+        int Delete(int id);
         MatterDto GetById(int id);
         List<MatterDto> GetAll();
-        List<MatterDto> GetMattersByClient(int clientId);
-        List<InvoiceDto> GetInvoicesByMatter(int matterId, InvoiceDto invoice);
-        List<InvoiceDto> GetLastWeeksBillingByAttorney(int attorneyId, InvoiceDto invoice);
-        decimal GetLastWeeksBillingForAttorney(Attorney attorney);
-        List<IGrouping<int, MatterDto>> GetAllMattersByClients(MatterDto matter);
-        List<IGrouping<int, InvoiceDto>> GetAllInvoicesByMatters(InvoiceDto invoice);
-
-
-
+        List<MatterClientDto> GetMattersForClient(int clientId);
+        List<InvoiceAttorneyDto> GetLastWeeksBillingByAttorneys();
+        decimal GetLastWeeksBillingForAttorney(int AttorneyId);
+        List<IGrouping<int, MatterClientDto>> GetAllMattersByClients();
+        List<InvoiceMatterDto> GetInvoicesForMatter(int matterId);
+        List<IGrouping<int, InvoiceMatterDto>> GetAllInvoicesByMatters();
 
     }
 
@@ -34,28 +32,31 @@ namespace MatterManagementWebApp.Services.Repository
             _context = context;
         }
 
-        public void Add(MatterDto matter)
+        public int Add(MatterDto matter)
         {
-            Attorney? attorney = _context.Attorneys.Where(_ => _.AttorneyId == matter.BillingAttorneyId).FirstOrDefault();
-            if (attorney?.JurisdictionId == matter.JurisdictionId)
+            Attorney billingAttorneyCheck = _context.Attorneys.FirstOrDefault(a => a.AttorneyId == matter.BillingAttorneyId);
+            Attorney responsibleAttorneyCheck = _context.Attorneys.FirstOrDefault(a => a.AttorneyId == matter.ResponsibleAttorneyId);
+
+            if (billingAttorneyCheck!.JurisdictionId != matter.JurisdictionId)
             {
-                var entity = new Matter
-                {
-                    MatterId = matter.MatterId,
-                    FullName = matter.FullName,
-                    OpenDate = matter.OpenDate,
-                    CloseDate = matter.CloseDate,
-                    JurisdictionId = matter.JurisdictionId,
-                    BillingAttorneyId = matter.BillingAttorneyId,
-                    ResponsibleAttorneyId = matter.ResponsibleAttorneyId,
-                    ClientId = matter.ClientId
-                };
-                _context.Matters.Add(entity);
-                _context.SaveChanges();
+                return (-1);
             }
+            Matter newMatter = new Matter();
+            {
+                newMatter.FullName = matter.FullName;
+                newMatter.OpenDate = matter.OpenDate;
+                newMatter.CloseDate = matter.CloseDate;
+                newMatter.JurisdictionId = matter.JurisdictionId;
+                newMatter.ClientId = matter.ClientId;
+                newMatter.BillingAttorneyId = matter.BillingAttorneyId;
+                newMatter.ResponsibleAttorneyId = matter.ResponsibleAttorneyId;
+            }
+            _context.Matters.Add(newMatter);
+            _context.SaveChanges();
+            return newMatter.MatterId;
         }
 
-        public void Update(MatterDto matter)
+        public int Update(MatterDto matter)
         {
                 var entity = _context.Matters.Find(matter.MatterId);
                 if (entity != null)
@@ -68,16 +69,23 @@ namespace MatterManagementWebApp.Services.Repository
                     entity.ResponsibleAttorneyId = matter.ResponsibleAttorneyId;
                     entity.ClientId = matter.ClientId;
                     _context.SaveChanges();
+                return entity.MatterId;
                 }
+                else { return 0; }
         }
 
-        public void Delete(int id)
+        public int Delete(int id)
         {
             var entity = _context.Matters.Find(id);
             if (entity != null)
             {
                 _context.Matters.Remove(entity);
                 _context.SaveChanges();
+                return entity.MatterId;
+            }
+            else
+            {
+                return 0;
             }
         }
 
@@ -115,51 +123,80 @@ namespace MatterManagementWebApp.Services.Repository
                 ClientId = m.ClientId
             }).ToList();
         }
-        public List<MatterDto> GetMattersByClient(int clientId)
+        public List<MatterClientDto> GetMattersForClient(int clientId)
         {
-            return GetAll()
-                .Where(m => m.ClientId == clientId)
-                .ToList();
+            IQueryable<Matter> mattersByClient = _context.Matters
+            .Include(m => m.BillingAttorney)
+            .Include(m => m.ResponsibleAttorney)
+            .Include(m => m.Jurisdiction)
+            .Include(m => m.Client)
+            .Where(c => c.ClientId.Equals(clientId));
+
+            return mattersByClient.Select(c => new MapMatterClient().Map(c)).ToList();
+        }
+        public List<IGrouping<int, InvoiceMatterDto>> GetAllInvoicesByMatters()
+        {
+            List<IGrouping<int, InvoiceMatterDto>> invoices = _context.Invoices
+                .Include(m => m.Matter)
+                .Include(m => m.Attorney)
+                .Select(c => new MapInvoiceMatter().Map(c)).AsEnumerable()
+                .GroupBy(s => s.MatterId).ToList();
+            return invoices;
+        }
+        public List<InvoiceMatterDto> GetInvoicesForMatter(int matterId)
+        {
+            IQueryable<Invoice> invoicesForMatter = _context.Invoices
+            .Include(m => m.Matter)
+            .Include(m => m.Attorney)
+            .Where(c => c.MatterId.Equals(matterId));
+
+            return invoicesForMatter.Select(c => new MapInvoiceMatter().Map(c)).ToList();
         }
 
-        public List<InvoiceDto> GetInvoicesByMatter(int matterId, InvoiceDto invoice)
+        public List<InvoiceAttorneyDto> GetLastWeeksBillingByAttorneys()
         {
-            List<Invoice> invoicesByMatter = _context.Invoices.Where(_ => _.MatterId == matterId).ToList();
-            return invoicesByMatter.Select(c => invoice).ToList();
-        }
+            List<int> idList = _context.Attorneys.Where(a => a.AttorneyId != 0).Select(a => a.AttorneyId).ToList();
+            int attorneyCount = idList.Count();
+            List<decimal> billings = new List<decimal>();
 
-        public List<InvoiceDto> GetLastWeeksBillingByAttorney(int attorneyId,InvoiceDto invoice)
-        {
-            DateTime lastMonday = DateTime.Today.AddDays(-1 * (int)DateTime.Today.DayOfWeek);
-            DateTime lastSunday = lastMonday.AddDays(-6);
+            for (int i = 0; i < attorneyCount; i++)
+                billings.Add(GetLastWeeksBillingForAttorney(idList[i]));
 
-            List<Invoice> invoices = _context.Invoices
-                .Where(i => i.AttorneyId == attorneyId && i.Date >= lastSunday && i.Date <= lastMonday).ToList();
-            return invoices.Select(c => invoice).ToList();
+            List<InvoiceAttorneyDto> billingByAttorneys = (from a in _context.Attorneys
+                                                           select new InvoiceAttorneyDto()
+                                                           {
+                                                               Id = a.AttorneyId,
+                                                               AttorneyName = a.FullName,
+                                                               Billing = 0
+                                                           }).ToList();
+
+            for (int i = 0; i < attorneyCount; i++)
+                billingByAttorneys[i].Billing = (double)billings[i];
+
+            return billingByAttorneys;
         }
-        public decimal GetLastWeeksBillingForAttorney(Attorney attorney)
+            public decimal GetLastWeeksBillingForAttorney(int attorneyId)
         {
             DateTime lastWeekStart = DateTime.Today.AddDays(-7);
             DateTime lastWeekEnd = DateTime.Today.AddDays(-1);
-
+            Attorney attorney = new Attorney();
             decimal totalBilling = _context.Invoices
-                .Where(i => i.AttorneyId == attorney.AttorneyId &&
+                .Where(i => i.AttorneyId == attorneyId &&
                             i.Date >= lastWeekStart && i.Date <= lastWeekEnd)
                 .Sum(i => attorney.HourlyRate * i.HoursWorked);
 
             return totalBilling;
 
         }
-        public List<IGrouping<int, MatterDto>> GetAllMattersByClients(MatterDto matter)
-        {
-            List<IGrouping<int, MatterDto>> matters = _context.Matters.Select(c => matter).GroupBy(s => s.ClientId).ToList();
-            return matters;
-        }
-
-        public List<IGrouping<int, InvoiceDto>> GetAllInvoicesByMatters(InvoiceDto invoice)
-        {
-            List<IGrouping<int, InvoiceDto>> invoices = _context.Invoices.Select(c => invoice).GroupBy(s => s.MatterId).ToList();
-            return invoices;
+        public List<IGrouping<int, MatterClientDto>> GetAllMattersByClients()
+        {            
+            List<IGrouping<int, MatterClientDto>> Matters = _context.Matters
+                .Include(m => m.BillingAttorney)
+                .Include(m => m.ResponsibleAttorney)
+                .Include(m => m.Jurisdiction)
+                .Include(m => m.Client)
+                .Select(c => new MapMatterClient().Map(c)).AsEnumerable().GroupBy(s => s.ClientId).ToList();
+            return Matters;
         }
 
     }

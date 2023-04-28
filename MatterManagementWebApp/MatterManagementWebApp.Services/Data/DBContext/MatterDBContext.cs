@@ -1,5 +1,6 @@
 ﻿global using Microsoft.EntityFrameworkCore;
 using MatterManagementWebApp.Services.Models.Entities;
+
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -21,48 +22,66 @@ namespace MatterManagementWebApp.Services.Data.DBContext
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Matter>()
-              .HasOne(m => m.BillingAttorney)
-              .WithMany()
-              .HasForeignKey(m => m.BillingAttorneyId)
-              .OnDelete(DeleteBehavior.NoAction);
+                       .HasKey(m => m.MatterId)
+                       .HasName("PrimaryKey_MatterId");
 
+            modelBuilder.Entity<Jurisdiction>()
+                        .HasKey(j => j.JurisdictionId)
+                        .HasName("PrimaryKey_JurisdictionId");
 
-            modelBuilder.Entity<Matter>()
-                .HasOne(m => m.ResponsibleAttorney)
-                .WithMany()
-                .HasForeignKey(m => m.ResponsibleAttorneyId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<Matter>()
-               .HasOne(m => m.ResponsibleAttorney)
-               .WithMany()
-               .HasForeignKey(m => m.ResponsibleAttorneyId)
-               .OnDelete(DeleteBehavior.NoAction);
-
-
-            modelBuilder.Entity<Matter>()
-                .HasOne(m => m.Client)
-                .WithMany(c => c.Matters)
-                .HasForeignKey(m => m.ClientId)
-            .OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Client>()
+                        .HasKey(c => c.ClientId)
+                        .HasName("PrimaryKey_ClientId");
 
             modelBuilder.Entity<Attorney>()
-                .HasOne(a => a.Jurisdiction)
-                .WithMany(j => j.Attorneys)
-                .HasForeignKey(a => a.JurisdictionId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<Matter>()
-                .HasOne(m => m.Jurisdiction)
-                .WithMany(j => j.Matters)
-                .HasForeignKey(m => m.JurisdictionId)
-                .OnDelete(DeleteBehavior.NoAction);
+                        .HasKey(a => a.AttorneyId)
+                        .HasName("PrimaryKey_AttorneyId");
 
             modelBuilder.Entity<Invoice>()
-                .HasOne(i => i.Matter)
-                .WithMany(m => m.Invoices)
-                .HasForeignKey(i => i.MatterId)
-            .OnDelete(DeleteBehavior.NoAction);
+                        .HasKey(i => i.InvoiceId)
+                        .HasName("PrimaryKey_InvoiceId");
+
+            modelBuilder.Entity<Jurisdiction>()
+                        .HasMany(e => e.Attorneys)
+                        .WithOne(e => e.Jurisdiction)
+                        .HasForeignKey(e => e.JurisdictionId)
+                        .IsRequired(false);
+
+            modelBuilder.Entity<Jurisdiction>()
+                        .HasMany(e => e.Matters)
+                        .WithOne(e => e.Jurisdiction)
+                        .HasForeignKey(e => e.JurisdictionId)
+                        .IsRequired(false);
+
+            modelBuilder.Entity<Client>()
+                        .HasMany(e => e.Matters)
+                        .WithOne(e => e.Client)
+                        .HasForeignKey(e => e.ClientId)
+                        .IsRequired(false);
+
+            modelBuilder.Entity<Attorney>()
+                        .HasMany(e => e.BillingAttorneyMatters)
+                        .WithOne(e => e.BillingAttorney)
+                        .HasForeignKey(e => e.BillingAttorneyId)
+                        .IsRequired(false);
+
+            modelBuilder.Entity<Attorney>()
+                        .HasMany(e => e.ResponsibleAttorneyMatters)
+                        .WithOne(e => e.ResponsibleAttorney)
+                        .HasForeignKey(e => e.ResponsibleAttorneyId)
+                        .IsRequired(false);
+
+            modelBuilder.Entity<Attorney>()
+                        .HasMany(e => e.Invoices)
+                        .WithOne(e => e.Attorney)
+                        .HasForeignKey(e => e.AttorneyId)
+                        .IsRequired(false);
+
+            modelBuilder.Entity<Matter>()
+                        .HasMany(e => e.Invoices)
+                        .WithOne(e => e.Matter)
+                        .HasForeignKey(e => e.MatterId)
+                        .IsRequired(false);
 
         }
     }

@@ -53,11 +53,12 @@ namespace MatterManagementWebApp.Services.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("AttorneyId");
+                    b.HasKey("AttorneyId")
+                        .HasName("PrimaryKey_AttorneyId");
 
                     b.HasIndex("JurisdictionId");
 
-                    b.ToTable("Attorney");
+                    b.ToTable("Attorneys");
                 });
 
             modelBuilder.Entity("MatterManagementWebApp.Services.Models.Entities.Client", b =>
@@ -89,7 +90,8 @@ namespace MatterManagementWebApp.Services.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("ClientId");
+                    b.HasKey("ClientId")
+                        .HasName("PrimaryKey_ClientId");
 
                     b.ToTable("Client");
                 });
@@ -117,7 +119,8 @@ namespace MatterManagementWebApp.Services.Migrations
                     b.Property<int>("TotalAmount")
                         .HasColumnType("int");
 
-                    b.HasKey("InvoiceId");
+                    b.HasKey("InvoiceId")
+                        .HasName("PrimaryKey_InvoiceId");
 
                     b.HasIndex("AttorneyId");
 
@@ -134,21 +137,17 @@ namespace MatterManagementWebApp.Services.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("JurisdictionId"));
 
-                    b.Property<string>("EmailId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("PhoneNo")
+                    b.Property<string>("Area")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.HasKey("JurisdictionId");
+                    b.Property<string>("EmailId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("JurisdictionId")
+                        .HasName("PrimaryKey_JurisdictionId");
 
                     b.ToTable("Jurisdiction");
                 });
@@ -167,8 +166,7 @@ namespace MatterManagementWebApp.Services.Migrations
                     b.Property<int>("ClientId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("CloseDate")
-                        .IsRequired()
+                    b.Property<DateTime>("CloseDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("FullName")
@@ -179,14 +177,14 @@ namespace MatterManagementWebApp.Services.Migrations
                     b.Property<int>("JurisdictionId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("OpenDate")
-                        .IsRequired()
+                    b.Property<DateTime>("OpenDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("ResponsibleAttorneyId")
                         .HasColumnType("int");
 
-                    b.HasKey("MatterId");
+                    b.HasKey("MatterId")
+                        .HasName("PrimaryKey_MatterId");
 
                     b.HasIndex("BillingAttorneyId");
 
@@ -196,16 +194,14 @@ namespace MatterManagementWebApp.Services.Migrations
 
                     b.HasIndex("ResponsibleAttorneyId");
 
-                    b.ToTable("Matter");
+                    b.ToTable("Matters");
                 });
 
             modelBuilder.Entity("MatterManagementWebApp.Services.Models.Entities.Attorney", b =>
                 {
                     b.HasOne("MatterManagementWebApp.Services.Models.Entities.Jurisdiction", "Jurisdiction")
                         .WithMany("Attorneys")
-                        .HasForeignKey("JurisdictionId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .HasForeignKey("JurisdictionId");
 
                     b.Navigation("Jurisdiction");
                 });
@@ -213,16 +209,12 @@ namespace MatterManagementWebApp.Services.Migrations
             modelBuilder.Entity("MatterManagementWebApp.Services.Models.Entities.Invoice", b =>
                 {
                     b.HasOne("MatterManagementWebApp.Services.Models.Entities.Attorney", "Attorney")
-                        .WithMany()
-                        .HasForeignKey("AttorneyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("Invoices")
+                        .HasForeignKey("AttorneyId");
 
                     b.HasOne("MatterManagementWebApp.Services.Models.Entities.Matter", "Matter")
                         .WithMany("Invoices")
-                        .HasForeignKey("MatterId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .HasForeignKey("MatterId");
 
                     b.Navigation("Attorney");
 
@@ -232,28 +224,20 @@ namespace MatterManagementWebApp.Services.Migrations
             modelBuilder.Entity("MatterManagementWebApp.Services.Models.Entities.Matter", b =>
                 {
                     b.HasOne("MatterManagementWebApp.Services.Models.Entities.Attorney", "BillingAttorney")
-                        .WithMany()
-                        .HasForeignKey("BillingAttorneyId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .WithMany("BillingAttorneyMatters")
+                        .HasForeignKey("BillingAttorneyId");
 
                     b.HasOne("MatterManagementWebApp.Services.Models.Entities.Client", "Client")
                         .WithMany("Matters")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .HasForeignKey("ClientId");
 
                     b.HasOne("MatterManagementWebApp.Services.Models.Entities.Jurisdiction", "Jurisdiction")
                         .WithMany("Matters")
-                        .HasForeignKey("JurisdictionId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .HasForeignKey("JurisdictionId");
 
                     b.HasOne("MatterManagementWebApp.Services.Models.Entities.Attorney", "ResponsibleAttorney")
-                        .WithMany()
-                        .HasForeignKey("ResponsibleAttorneyId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .WithMany("ResponsibleAttorneyMatters")
+                        .HasForeignKey("ResponsibleAttorneyId");
 
                     b.Navigation("BillingAttorney");
 
@@ -262,6 +246,15 @@ namespace MatterManagementWebApp.Services.Migrations
                     b.Navigation("Jurisdiction");
 
                     b.Navigation("ResponsibleAttorney");
+                });
+
+            modelBuilder.Entity("MatterManagementWebApp.Services.Models.Entities.Attorney", b =>
+                {
+                    b.Navigation("BillingAttorneyMatters");
+
+                    b.Navigation("Invoices");
+
+                    b.Navigation("ResponsibleAttorneyMatters");
                 });
 
             modelBuilder.Entity("MatterManagementWebApp.Services.Models.Entities.Client", b =>

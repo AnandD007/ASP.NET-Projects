@@ -1,11 +1,10 @@
-﻿using MatterManagementWebApp.Services.Data.DBContext;
-using MatterManagementWebApp.Services.Data.DTOs;
+﻿using MatterManagementWebApp.Services.Data.DTOs;
 using MatterManagementWebApp.Services.Models;
 using MatterManagementWebApp.Services.Models.Entities;
 using MatterManagementWebApp.Services.Repository;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MatterManagementWebApp.WebAPI.Controllers
+namespace MatterManagementWebApp.Api.Controllers
 {
     // Jurisdiction Controller
     [Route("api/[controller]")]

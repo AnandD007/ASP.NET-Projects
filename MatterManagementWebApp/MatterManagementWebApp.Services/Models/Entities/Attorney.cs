@@ -1,12 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MatterManagementWebApp.Services.Models.Entities;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace MatterManagementWebApp.Services.Models.Entities
 {
-    [Table("Attorney")]
     public class Attorney
     {
-        [Key]
+        [Key][JsonIgnore]
         public int AttorneyId { get; set; }
         [Required]
         [MaxLength(30)]
@@ -22,7 +23,10 @@ namespace MatterManagementWebApp.Services.Models.Entities
         [Required]
         [ForeignKey("Jurisdiction")]
         public int JurisdictionId { get; set; }
-        public virtual Jurisdiction? Jurisdiction { get; set; }
+        public ICollection<Matter> BillingAttorneyMatters { get; set; }
+        public ICollection<Matter> ResponsibleAttorneyMatters { get; set; }
+        public Jurisdiction Jurisdiction { get; set; }
+        public ICollection<Invoice> Invoices { get; set; }
 
     }
 }

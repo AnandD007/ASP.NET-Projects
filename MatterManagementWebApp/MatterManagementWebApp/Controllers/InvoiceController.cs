@@ -20,7 +20,7 @@ namespace MatterManagementWebApp.Api.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
-        public IActionResult Create([FromBody] InvoiceDto invoice)
+        public IActionResult Post(InvoiceDto invoice)
         {
             if (!ModelState.IsValid)
             {
@@ -32,6 +32,18 @@ namespace MatterManagementWebApp.Api.Controllers
             return CreatedAtAction(nameof(GetById), new { id = invoice.InvoiceId }, invoice);
         }
 
+        /// <summary>
+        /// Get a invoice By AttorneyId.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     Get /api/invoice/{id}
+        ///
+        /// </remarks>
+        /// <response code="200">successfully received invoice values</response>
+        /// <response code="404">invoice with this id not found</response>
+        /// <response code="500">Internal server Error</response>
         [HttpGet("/api/Invoice/{id}")]
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
@@ -69,13 +81,11 @@ namespace MatterManagementWebApp.Api.Controllers
             {
                 return BadRequest(ModelState);
             }
-
             if (id != invoice.InvoiceId)
             {
                 return BadRequest();
             }
-
-            _invoiceRepository.Update(invoice);
+            _invoiceRepository.Update(id,invoice);
 
             return NoContent();
         }

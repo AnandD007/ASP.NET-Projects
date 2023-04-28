@@ -9,11 +9,12 @@ namespace MatterManagementWebApp.Services.Repository
 {
     public interface IAttorneyRepository
     {
-        void Add(AttorneyDto attorney);
+        int Add(AttorneyDto attorney);
         IEnumerable<AttorneyDto> GetAll();
+        List<AttorneyDto> GetAttorniesByJurisdiction(int jurisdictionId);
         AttorneyDto GetById(int id);
-        void Update(AttorneyDto attorney);
-        void Delete(int id);
+        int Update(AttorneyDto attorney);
+        int Delete(int id);
     }
 
     public class AttorneyRepository : IAttorneyRepository
@@ -25,11 +26,10 @@ namespace MatterManagementWebApp.Services.Repository
             _context = context;
         }
 
-        public void Add(AttorneyDto a)
+        public int Add(AttorneyDto a)
         {
             var entity = new Attorney
             {
-                AttorneyId = a.AttorneyId,
                 FullName = a.FullName,
                 EmailId = a.EmailId,
                 HourlyRate = a.HourlyRate,
@@ -40,6 +40,7 @@ namespace MatterManagementWebApp.Services.Repository
 
             _context.Attorneys.Add(entity);
             _context.SaveChanges();
+            return entity.AttorneyId;
 
             a.AttorneyId = entity.AttorneyId;
         }
@@ -76,32 +77,53 @@ namespace MatterManagementWebApp.Services.Repository
                 })
                 .SingleOrDefault();
         }
-
-        public void Update(AttorneyDto a)
+        public List<AttorneyDto> GetAttorniesByJurisdiction(int jurisdictionId)
+        {
+            List<AttorneyDto> attorneys = (from a in _context.Attorneys
+                                           where a.JurisdictionId == jurisdictionId
+                                           select new AttorneyDto()
+                                           {
+                                               AttorneyId = a.AttorneyId,
+                                               FullName = a.FullName,
+                                               EmailId = a.EmailId,
+                                               PhoneNo = a.PhoneNo,
+                                               Role = a.Role,
+                                               HourlyRate = a.HourlyRate,
+                                               JurisdictionId = a.JurisdictionId
+                                           }).ToList();
+            return attorneys;
+        }
+        public int Update(AttorneyDto a)
         {
             var entity = _context.Attorneys.SingleOrDefault(a => a.AttorneyId == a.AttorneyId);
 
             if (entity == null)
-                throw new InvalidOperationException("Entity not found");
-            entity.FullName = a.FullName;
-            entity.EmailId = a.EmailId;
-            entity.HourlyRate = a.HourlyRate;
-            entity.PhoneNo = a.PhoneNo;
-            entity.Role = a.Role;
-            entity.JurisdictionId = a.JurisdictionId;
-
-            _context.SaveChanges();
+                return 0;
+            else
+            {
+                entity.FullName = a.FullName;
+                entity.EmailId = a.EmailId;
+                entity.HourlyRate = a.HourlyRate;
+                entity.PhoneNo = a.PhoneNo;
+                entity.Role = a.Role;
+                entity.JurisdictionId = a.JurisdictionId;
+                _context.SaveChanges();
+                return entity.AttorneyId;
+            }
         }
 
-        public void Delete(int id)
+        public int Delete(int id)
         {
             var entity = _context.Attorneys.SingleOrDefault(a => a.AttorneyId == id);
 
             if (entity == null)
-                throw new InvalidOperationException("Entity not found");
-
-            _context.Attorneys.Remove(entity);
-            _context.SaveChanges();
+                return 0;
+            else
+            {
+                _context.Attorneys.Remove(entity);
+                _context.SaveChanges();
+                return entity.AttorneyId;
+            }
         }
     }
 

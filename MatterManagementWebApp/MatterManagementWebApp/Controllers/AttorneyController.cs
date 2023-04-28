@@ -1,10 +1,12 @@
 ﻿using MatterManagementWebApp.Services.Data.DTOs;
 using MatterManagementWebApp.Services.Repository;
 using Microsoft.AspNetCore.Mvc;
+using MatterManagementWebApp.Services.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MatterManagementWebApp.Api;
 
-namespace MatterManagementWebApp.WebAPI.Controllers
+namespace MatterManagementWebApp.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -21,14 +23,19 @@ namespace MatterManagementWebApp.WebAPI.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
-        public IActionResult Get()
+        public IActionResult GetAll()
         {
             var attorneys = _attorneyRepository.GetAll();
-            return Ok(attorneys);
+            if (attorneys != null) {
+                ResponseStatus response = new
+                        ResponseStatus(StatusCodes.Status200OK, ConstantStatusMessages.DataRetrievedSuccessfully, attorneys);
+                return Ok(response);
+               }
+            return NoContent();
         }
 
         /// <summary>
-        /// Deletes a attorney.
+        /// Get a attorney By AttorneyId.
         /// </summary>
         /// <remarks>
         /// Sample request:
@@ -46,11 +53,44 @@ namespace MatterManagementWebApp.WebAPI.Controllers
         public IActionResult GetById(int id)
         {
             var attorney = _attorneyRepository.GetById(id);
-            if (attorney == null)
+            if (attorney != null)
             {
-                return NotFound();
+                ResponseStatus attorneyExistsResponse = new
+                    (StatusCodes.Status200OK, ConstantStatusMessages.DataRetrievedSuccessfully, attorney);
+                return Ok(attorneyExistsResponse);
             }
-            return Ok(attorney);
+            ResponseStatus attorneyNotExistsresponse = new
+                (StatusCodes.Status404NotFound, ConstantStatusMessages.AttorneyDoesNotExist, null);
+            return NotFound(attorneyNotExistsresponse);
+        }
+        /// <summary>
+        /// Get Attorneys By JurisdictionId.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     Get /api/GetAttorneysByJurisdiction/{id}
+        ///
+        /// </remarks>
+        /// <response code="200">successfully received attorney values</response>
+        /// <response code="404">attorney with this id not found</response>
+        /// <response code="500">Internal server Error</response>
+        [HttpGet("GetAttorneysByJurisdiction/{id}")]
+        public IActionResult GetAttorneysByJurisdiction(int id)
+        {
+            List<AttorneyDto> attorneys = _attorneyRepository.GetAttorniesByJurisdiction(id);
+            if (attorneys == null)
+            {
+                ResponseStatus notFoundResponse = new
+                (StatusCodes.Status404NotFound, ConstantStatusMessages.AttorneysByJurisdictionNotFound, attorneys);
+                return NotFound(notFoundResponse);
+            }
+            else
+            {
+                ResponseStatus responseExists = new
+                (StatusCodes.Status200OK, ConstantStatusMessages.DataRetrievedSuccessfully, attorneys);
+                return Ok(responseExists);
+            }
         }
 
         /// <summary>
@@ -77,7 +117,9 @@ namespace MatterManagementWebApp.WebAPI.Controllers
             }
 
             _attorneyRepository.Add(attorney);
-            return CreatedAtAction(nameof(GetById), new { id = attorney.AttorneyId }, attorney);
+            ResponseStatus response = new
+            (StatusCodes.Status200OK, ConstantStatusMessages.DataAddedSuccessfully, attorney);
+            return Ok(response);
         }
 
 
@@ -93,25 +135,27 @@ namespace MatterManagementWebApp.WebAPI.Controllers
         /// <response code="200">attorney updated successfully</response>
         /// <response code="404">attorney not found</response>
         /// <response code="500">Internal server Error</response>
-        [HttpPut("attorney/{id}")]
+        [HttpPut("{id}")]
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
-        public IActionResult Put(int id, [FromBody] AttorneyDto attorney)
+        public IActionResult Put([FromBody] AttorneyDto attorney)
         {
-            if (attorney == null || id != attorney.AttorneyId)
+            int result = _attorneyRepository.Update(attorney);
+            if (result.Equals(0))
             {
-                return BadRequest();
+                ResponseStatus response = new
+                    (StatusCodes.Status404NotFound, ConstantStatusMessages.AttorneyDoesNotExist,
+                                                    ConstantStatusMessages.AttorneyDoesNotExist);
+                return NotFound(response);
+            }
+            else
+            {
+                ResponseStatus response = new(StatusCodes.Status200OK, ConstantStatusMessages.DataUpdatedSuccessfully, result);
+                return Ok(response);
             }
 
-            var existingAttorney = _attorneyRepository.GetById(id);
-            if (existingAttorney == null)
-            {
-                return NotFound();
-            }
-
-            _attorneyRepository.Update(attorney);
-            return new NoContentResult();
+     
         }
 
         /// <summary>
@@ -133,13 +177,19 @@ namespace MatterManagementWebApp.WebAPI.Controllers
         public IActionResult Delete(int id)
         {
             var attorney = _attorneyRepository.GetById(id);
-            if (attorney == null)
+            int result = _attorneyRepository.Delete(id);
+            if (result.Equals(0))
             {
-                return NotFound();
+                ResponseStatus response =
+                    new(StatusCodes.Status400BadRequest, ConstantStatusMessages.AttorneyDoesNotExist, result);
+                return BadRequest(response);
+            }
+            else
+            {
+                ResponseStatus response = new(StatusCodes.Status200OK, ConstantStatusMessages.DataDeletedSuccessfully, null);
+                return Ok(response);
             }
 
-            _attorneyRepository.Delete(id);
-            return new NoContentResult();
 
         }
     }

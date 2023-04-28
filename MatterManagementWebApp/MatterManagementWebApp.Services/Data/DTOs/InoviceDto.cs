@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MatterManagementWebApp.Services.Data.DTOs
+﻿namespace MatterManagementWebApp.Services.Data.DTOs
 {
     public class InvoiceDto
     {

@@ -8,11 +8,11 @@ namespace MatterManagementWebApp.Services.Repository
 {
     public interface IJurisdictionRepository
     {
-        void Add(JurisdictionDto jurisdiction);
+        int Add(JurisdictionDto jurisdiction);
         IEnumerable<JurisdictionDto> GetAll();
         JurisdictionDto GetById(int JurisdictionId);
-        void Update(JurisdictionDto jurisdiction);
-        void Delete(int JurisdictionId);
+        int Update(JurisdictionDto jurisdiction);
+        int Delete(int JurisdictionId);
     }
     public class JurisdictionRepository : IJurisdictionRepository
     {
@@ -23,40 +23,46 @@ namespace MatterManagementWebApp.Services.Repository
             _context = context;
         }
 
-        public void Add(JurisdictionDto jurisdiction)
+        public int Add(JurisdictionDto jurisdiction)
         {
             var entity = new Jurisdiction
             {
                 JurisdictionId = jurisdiction.JurisdictionId,
-                FullName = jurisdiction.FullName,
-                PhoneNo = jurisdiction.PhoneNo,
+                Area = jurisdiction.Area,
                 EmailId = jurisdiction.EmailId,
             };
             _context.Jurisdictions.Add(entity);
             _context.SaveChanges();
+            return entity.JurisdictionId;
         }
 
-        public void Update(JurisdictionDto jurisdiction)
+        public int Update(JurisdictionDto jurisdiction)
 
         {
             var entity = _context.Jurisdictions.Find(jurisdiction.JurisdictionId);
             if (entity != null)
             {
-                entity.FullName = jurisdiction.FullName;
-                entity.PhoneNo = jurisdiction.PhoneNo;
+                entity.Area = jurisdiction.Area;
                 entity.EmailId = jurisdiction.EmailId;
                 _context.SaveChanges();
+                return entity.JurisdictionId;
+            }
+            else
+            {
+                return 0;
             }
         }
 
-        public void Delete(int JurisdictionId)
+        public int Delete(int JurisdictionId)
         {
             var entity = _context.Jurisdictions.Find(JurisdictionId);
             if (entity != null)
             {
                 _context.Jurisdictions.Remove(entity);
                 _context.SaveChanges();
+                return entity.JurisdictionId;
             }
+            else { return 0; }
         }
 
         public JurisdictionDto GetById(int JurisdictionId)
@@ -67,9 +73,8 @@ namespace MatterManagementWebApp.Services.Repository
                 return new JurisdictionDto
                 {
                     JurisdictionId = entity.JurisdictionId,
-                    PhoneNo = entity.PhoneNo,
-                    EmailId = entity.EmailId,
-                    FullName = entity.FullName
+                    Area = entity.Area,
+                    EmailId = entity.EmailId
                 };
             }
             return null;
@@ -81,8 +86,7 @@ namespace MatterManagementWebApp.Services.Repository
             return _context.Jurisdictions.Select(j => new JurisdictionDto
             {
                 JurisdictionId = j.JurisdictionId,
-                FullName = j.FullName,
-                PhoneNo= j.PhoneNo,
+                Area= j.Area,
                 EmailId = j.EmailId
             }).ToList();
         }

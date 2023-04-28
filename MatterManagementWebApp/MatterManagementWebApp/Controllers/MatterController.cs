@@ -1,4 +1,5 @@
-﻿using MatterManagementWebApp.Services.Data.DBContext;
+﻿
+using MatterManagementWebApp.Services.Data.DBContext;
 using MatterManagementWebApp.Services.Data.DTOs;
 using MatterManagementWebApp.Services.Models;
 using MatterManagementWebApp.Services.Repository;
@@ -10,9 +11,9 @@ namespace MatterManagementWebApp.Api.Controllers
     [ApiController]
     public class MatterController : ControllerBase
     {
-        private readonly MatterRepository _matterRepository;
+        private readonly IMatterRepository _matterRepository;
 
-        public MatterController(MatterRepository matterRepository)
+        public MatterController(IMatterRepository matterRepository)
         {
             _matterRepository = matterRepository;
         }
@@ -21,16 +22,29 @@ namespace MatterManagementWebApp.Api.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
-        public IActionResult Create([FromBody] MatterDto matter)
+        public IActionResult Post(MatterDto matter)
         {
-            if (!ModelState.IsValid)
+            int result = _matterRepository.Add(matter);
+            if (result.Equals(0))
             {
-                return BadRequest(ModelState);
+                ResponseStatus response = new
+                    (StatusCodes.Status400BadRequest, ConstantStatusMessages.NoMatchingJurisdiction,
+                                                      ConstantStatusMessages.NoMatchingJurisdiction);
+                return BadRequest(response);
             }
-
-            _matterRepository.Add(matter);
-
-            return CreatedAtAction(nameof(GetById), new { id = matter.MatterId }, matter);
+            else if (result.Equals(-1))
+            {
+                ResponseStatus response = new
+                    (StatusCodes.Status400BadRequest, ConstantStatusMessages.NoMatchingJurisdiction,
+                                                      ConstantStatusMessages.NoMatchingJurisdiction);
+                return BadRequest(response);
+            }
+            else
+            {
+                ResponseStatus response = new
+                (StatusCodes.Status200OK, ConstantStatusMessages.DataAddedSuccessfully, result);
+                return Ok(response);
+            }
         }
 
         [HttpGet("matter/{id}")]
@@ -41,22 +55,23 @@ namespace MatterManagementWebApp.Api.Controllers
         {
             var matter = _matterRepository.GetById(id);
 
-            if (matter == null)
+            if (matter != null)
             {
-                return NotFound();
+                ResponseStatus matterExistsResponse = new
+                (StatusCodes.Status200OK, ConstantStatusMessages.DataRetrievedSuccessfully, matter);
+                return Ok(matterExistsResponse);
             }
-            else
-            {
-                return Ok(matter);
-            }
+            ResponseStatus matterNotExistsResponse = new
+            (StatusCodes.Status404NotFound, ConstantStatusMessages.MatterDoesNotExist, null);
+            return NotFound(matterNotExistsResponse);
         }
-        [HttpGet("/GetMattersByClient/{ClientId}")]
+        [HttpGet("GetMattersForClient/{ClientId}")]
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
         public IActionResult GetMattersByClient(int ClientId)
         {
-            var matter = _matterRepository.GetMattersByClient(ClientId);
+            var matter = _matterRepository.GetMattersForClient(ClientId);
 
             if (matter == null)
             {
@@ -66,13 +81,13 @@ namespace MatterManagementWebApp.Api.Controllers
             return Ok(matter);
         }
 
-        [HttpGet("/GetInvoicesByMatter/{MatterId}")]
+        [HttpGet("GetLastWeeksBillingForAttorney/{AttorneyId}")]
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
-        public IActionResult GetInvoicesByMatter(int matterId, InvoiceDto invoice)
+        public IActionResult GetLastWeeksBillingForAttorney(int attorneyId)
         {
-            var matter = _matterRepository.GetInvoicesByMatter(matterId,invoice);
+            var matter = _matterRepository.GetLastWeeksBillingForAttorney(attorneyId);
 
             if (matter == null)
             {
@@ -82,13 +97,13 @@ namespace MatterManagementWebApp.Api.Controllers
             return Ok(matter);
         }
 
-        [HttpGet("/GetLastWeeksBillingByAttorney/{AttorneyId}")]
+        [HttpGet("GetLastWeeksBillingByAttorneys")]
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
-        public IActionResult GetLastWeeksBillingByAttorney(int attorneyId, InvoiceDto invoice)
+        public IActionResult GetLastWeeksBillingByAttorneys()
         {
-            var matter = _matterRepository.GetLastWeeksBillingByAttorney(attorneyId,invoice);
+            var matter = _matterRepository.GetLastWeeksBillingByAttorneys();
 
             if (matter == null)
             {
@@ -98,28 +113,13 @@ namespace MatterManagementWebApp.Api.Controllers
             return Ok(matter);
         }
 
-        [HttpGet("/GetAllMattersByClients/{Matter}")]
+        [HttpGet("GetAllMattersByClients")]
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
-        public IActionResult GetAllMattersByClients(MatterDto Matter)
+        public IActionResult GetAllMattersByClients()
         {
-            var matter = _matterRepository.GetAllMattersByClients(Matter);
-
-            if (matter == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(matter);
-        }
-        [HttpGet("/GetInvoiceByMatter/{MatterId}")]
-        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
-        public IActionResult GetAllInvoicesByMatters(int matterId, InvoiceDto invoice)
-        {
-            var matter = _matterRepository.GetInvoicesByMatter(matterId, invoice);
+            var matter = _matterRepository.GetAllMattersByClients();
 
             if (matter == null)
             {
@@ -129,13 +129,13 @@ namespace MatterManagementWebApp.Api.Controllers
             return Ok(matter);
         }
 
-        [HttpGet("/GetAllInvoiceByMatters/{Invoice}")]
+        [HttpGet("GetAllInvoicesByMatters")]
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
-        public IActionResult GetAllInvoicesByMatters(InvoiceDto invoice)
+        public IActionResult GetAllInvoicesByMatters()
         {
-            var matter = _matterRepository.GetAllInvoicesByMatters(invoice);
+            var matter = _matterRepository.GetAllInvoicesByMatters();
 
             if (matter == null)
             {
@@ -143,6 +143,27 @@ namespace MatterManagementWebApp.Api.Controllers
             }
 
             return Ok(matter);
+        }
+
+        [HttpGet("GetAllInvoicesForMatter")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
+        public IActionResult GetInvoicesForMatter(int id)
+        {
+            List<InvoiceMatterDto> result = _matterRepository.GetInvoicesForMatter(id);
+            if (result == null)
+            {
+                ResponseStatus noInvoicesByMatterResponse = new
+                (StatusCodes.Status404NotFound, ConstantStatusMessages.InvoicesByMatterNotFound, null);
+                return NotFound(noInvoicesByMatterResponse);
+            }
+            else
+            {
+                ResponseStatus invoicesByMatterExistsResponse = new
+                (StatusCodes.Status200OK, ConstantStatusMessages.DataRetrievedSuccessfully, result);
+                return Ok(invoicesByMatterExistsResponse);
+            }
         }
 
         [HttpGet("matters")]
@@ -152,8 +173,14 @@ namespace MatterManagementWebApp.Api.Controllers
         public IActionResult GetAll()
         {
             var matters = _matterRepository.GetAll();
+            if (matters != null)
+            {
+                ResponseStatus response = new
+                    ResponseStatus(StatusCodes.Status200OK, ConstantStatusMessages.DataRetrievedSuccessfully, matters);
+                return Ok(response);
+            }
+            return NoContent();
 
-            return Ok(matters);
         }
 
         [HttpPut("matter/{id}")]
@@ -162,19 +189,19 @@ namespace MatterManagementWebApp.Api.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
         public IActionResult Update(int id, [FromBody] MatterDto matter)
         {
-            if (!ModelState.IsValid)
+            int result = _matterRepository.Update(matter);
+            if (result.Equals(0))
             {
-                return BadRequest(ModelState);
+                ResponseStatus response = new
+                    (StatusCodes.Status404NotFound, ConstantStatusMessages.MatterDoesNotExist,
+                                                    ConstantStatusMessages.MatterDoesNotExist);
+                return NotFound(response);
             }
-
-            if (id != matter.MatterId)
+            else
             {
-                return BadRequest();
+                ResponseStatus response = new(StatusCodes.Status200OK, ConstantStatusMessages.DataUpdatedSuccessfully, result);
+                return Ok(response);
             }
-
-            _matterRepository.Update(matter);
-
-            return NoContent();
         }
 
         [HttpDelete("matter/{id}")]
@@ -183,16 +210,19 @@ namespace MatterManagementWebApp.Api.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
         public IActionResult Delete(int id)
         {
-            var matter = _matterRepository.GetById(id);
+            int result = _matterRepository.Delete(id);
 
-            if (matter == null)
+            if (result.Equals(0))
             {
-                return NotFound();
+                ResponseStatus response =
+                    new(StatusCodes.Status400BadRequest, ConstantStatusMessages.MatterDoesNotExist, result);
+                return BadRequest(response);
             }
-
-            _matterRepository.Delete(id);
-
-            return NoContent();
+            else
+            {
+                ResponseStatus response = new(StatusCodes.Status200OK, ConstantStatusMessages.DataDeletedSuccessfully, null);
+                return Ok(response);
+            }
         }
     }
 
